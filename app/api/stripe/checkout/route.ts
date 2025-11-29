@@ -22,9 +22,15 @@ export async function POST(req: NextRequest) {
     // Get or create user in Supabase with actual Clerk email
     const clerkUser = await currentUser();
     const email = clerkUser?.emailAddresses?.[0]?.emailAddress || "unknown@email.com";
+
+    console.log("Checkout: clerkId=", clerkId, "email=", email);
+
     const user = await getOrCreateUser(clerkId, email);
 
+    console.log("Checkout: user result=", user);
+
     if (!user) {
+      console.error("Checkout: Failed to get/create user for clerkId=", clerkId);
       return NextResponse.json(
         { error: "Failed to get user" },
         { status: 500 }
