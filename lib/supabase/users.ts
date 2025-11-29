@@ -7,26 +7,31 @@ export async function getOrCreateUser(
 ): Promise<User | null> {
   const supabase = createServerClient();
 
-  // Try to get existing user
-  const { data: existingUser } = await supabase
+  // Try to get existing user (use maybeSingle to avoid error when not found)
+  const { data: existingUser, error: selectError } = await supabase
     .from("users")
     .select("*")
     .eq("clerk_id", clerkId)
-    .single();
+    .maybeSingle();
+
+  if (selectError) {
+    console.error("Error checking for existing user:", selectError);
+    return null;
+  }
 
   if (existingUser) {
     return existingUser;
   }
 
   // Create new user
-  const { data: newUser, error } = await supabase
+  const { data: newUser, error: insertError } = await supabase
     .from("users")
     .insert({ clerk_id: clerkId, email })
     .select()
     .single();
 
-  if (error) {
-    console.error("Error creating user:", error);
+  if (insertError) {
+    console.error("Error creating user:", insertError);
     return null;
   }
 

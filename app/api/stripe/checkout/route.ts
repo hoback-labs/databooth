@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe, CREDIT_PACKS, type CreditPackId } from "@/lib/stripe/config";
 import { getOrCreateUser } from "@/lib/supabase/users";
@@ -19,9 +19,10 @@ export async function POST(req: NextRequest) {
 
     const pack = CREDIT_PACKS[packId as CreditPackId];
 
-    // Get or create user in Supabase
-    // Note: We'll get email from Clerk in a real implementation
-    const user = await getOrCreateUser(clerkId, "user@example.com");
+    // Get or create user in Supabase with actual Clerk email
+    const clerkUser = await currentUser();
+    const email = clerkUser?.emailAddresses?.[0]?.emailAddress || "unknown@email.com";
+    const user = await getOrCreateUser(clerkId, email);
 
     if (!user) {
       return NextResponse.json(
