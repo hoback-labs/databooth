@@ -1,0 +1,21 @@
+name,phone,zipcode,support_calls,support_emails,signup_date,product_ids,total_spend,customer_segment
+Sarah Chen,555-0142,94102,2,5,2024-03-15,DB-PRO,125.00,Small Business
+Marcus Johnson,555-0187,10001,0,1,2024-06-22,DB-STARTER,25.00,Individual
+Emily Rodriguez,555-0234,60601,8,12,2023-11-08,"DB-PRO,DB-TEAM",450.00,Enterprise
+David Kim,555-0156,98101,1,3,2024-08-30,DB-STARTER,50.00,Individual
+Rachel Thompson,555-0198,02101,3,4,2024-01-19,DB-PRO,200.00,Small Business
+James Wilson,555-0267,30301,0,0,2024-09-15,DB-STARTER,25.00,Individual
+Amanda Foster,555-0145,85001,15,22,2023-08-05,"DB-PRO,DB-TEAM,DB-ENTERPRISE",1250.00,Enterprise
+Michael Brown,555-0178,33101,1,2,2024-05-11,DB-PRO,150.00,Small Business
+Jessica Lee,555-0212,90001,4,8,2024-02-28,DB-TEAM,275.00,Small Business
+Christopher Davis,555-0189,75201,0,1,2024-10-01,DB-STARTER,25.00,Individual
+Nicole Martinez,555-0234,80201,6,9,2023-12-14,"DB-PRO,DB-TEAM",525.00,Enterprise
+Andrew Taylor,555-0156,98102,2,3,2024-07-07,DB-PRO,100.00,Small Business
+Stephanie White,555-0278,19101,0,2,2024-04-22,DB-STARTER,50.00,Individual
+Daniel Garcia,555-0145,77001,11,18,2023-09-30,"DB-TEAM,DB-ENTERPRISE",875.00,Enterprise
+Laura Anderson,555-0198,48201,1,1,2024-08-14,DB-STARTER,25.00,Individual
+Ryan Mitchell,555-0267,28201,3,5,2024-01-05,DB-PRO,175.00,Small Business
+Megan Clark,555-0189,97201,0,0,2024-11-12,DB-STARTER,25.00,Individual
+Kevin Robinson,555-0212,55401,7,14,2023-10-22,"DB-PRO,DB-TEAM",600.00,Enterprise
+Ashley Turner,555-0178,32801,2,4,2024-06-08,DB-PRO,125.00,Small Business
+Brandon Scott,555-0145,92101,0,1,2024-09-28,DB-STARTER,25.00,Individual

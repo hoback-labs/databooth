@@ -1,0 +1,30 @@
+{
+  "name": "soccer-json-db",
+  "version": "1.0.0",
+  "description": "Persistence JSON Db to save position of received and shot messi goals",
+  "main": "./lib/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon ssr-server.js",
+    "dev": "nodemon ssr-server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/twjasa/soccer-json-db.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/twjasa/soccer-json-db/issues"
+  },
+  "homepage": "https://github.com/twjasa/soccer-json-db#readme",
+  "dependencies": {
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "express-jwt": "^6.1.0",
+    "express-rate-limit": "^5.3.0",
+    "lowdb": "1.0.0",
+    "nodemon": "^2.0.12"
+  }
+}

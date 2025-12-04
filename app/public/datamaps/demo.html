@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senior Population Growth Interactive Map</title>
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+    <style>
+        :root {
+            --color-bg: #f5f5f5;
+            --color-text: #1f2121;
+            --color-border: #ddd;
+            --color-driver-1: rgba(76, 175, 80, 0.7);
+            --color-driver-2: rgba(63, 81, 181, 0.7);
+        }
+
+        .dark {
+            --color-bg: #1e1e1e;
+            --color-text: #e0e0e0;
+            --color-border: #555;
+            --color-driver-1: rgba(100, 200, 100, 0.7);
+            --color-driver-2: rgba(80, 120, 200, 0.7);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--color-bg);
+            color: var(--color-text);
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-bottom: 1px solid var(--color-border);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 16px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 150ms ease;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background: #1976D2;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn-secondary {
+            background: #757575;
+        }
+
+        .btn-secondary:hover {
+            background: #616161;
+        }
+
+        .file-status {
+            font-size: 13px;
+            color: #4caf50;
+            font-weight: 500;
+        }
+
+        .file-status.error {
+            color: #f44336;
+        }
+
+        .map-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            max-width: 280px;
+            font-size: 13px;
+            z-index: 10;
+        }
+
+        .legend h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .legend-label {
+            flex: 1;
+            color: #333;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 200ms ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 32px;
+            border-radius: 8px;
+            max-width: 480px;
+            width: 90%;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+            animation: slideIn 300ms ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0;
+            flex: 1;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+            transition: color 150ms ease;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .modal-body {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .modal-field {
+            margin-bottom: 16px;
+        }
+
+        .modal-label {
+            font-weight: 600;
+            color: #333;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .modal-value {
+            color: #555;
+            font-size: 14px;
+        }
+
+        .growth-rate {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1976D2;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .driver-badge {
+            display: inline-block;
+            background: #f0f0f0;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .modal-links {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid #eee;
+        }
+
+        .modal-links a {
+            display: inline-block;
+            color: #2196F3;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            margin-right: 12px;
+            transition: color 150ms ease;
+        }
+
+        .modal-links a:hover {
+            color: #1976D2;
+            text-decoration: underline;
+        }
+
+        .no-data-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 24px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            z-index: 5;
+            max-width: 300px;
+        }
+
+        .no-data-message p {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 16px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .modal-content {
+                margin: 20% auto;
+                width: 95%;
+                padding: 24px;
+            }
+
+            .legend {
+                bottom: 16px;
+                left: 16px;
+                max-width: 240px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Senior Population Growth</h1>
+            <div class="controls">
+                <button class="btn btn-secondary" id="loadDefaultBtn">Load Demo Data</button>
+                <button class="btn" id="darkModeToggle">Toggle Dark Mode</button>
+                <input type="file" id="csvFile" accept=".csv" style="display:none;" />
+                <span class="file-status" id="fileStatus"></span>
+            </div>
+        </div>
+
+        <div class="map-container">
+            <div id="map"></div>
+            <div class="legend">
+                <h3>Growth Driver</h3>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--color-driver-1);"></div>
+                    <span class="legend-label">Migration-Based</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--color-driver-2);"></div>
+                    <span class="legend-label">Aging in Place</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="dataModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalLocation"></h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-field">
+                    <div class="modal-label">Growth Rate (65+)</div>
+                    <div class="modal-value"><span class="growth-rate" id="modalGrowthRate"></span></div>
+                </div>
+                <div class="modal-field">
+                    <div class="modal-label">Time Period</div>
+                    <div class="modal-value" id="modalTimePeriod"></div>
+                </div>
+                <div class="modal-field">
+                    <div class="modal-label">Primary Driver</div>
+                    <div class="modal-value"><span class="driver-badge" id="modalDriver"></span></div>
+                </div>
+                <div class="modal-field">
+                    <div class="modal-label">Key Insight</div>
+                    <div class="modal-value" id="modalInsight"></div>
+                </div>
+                <div class="modal-links">
+                    <a id="modalLink" target="_blank" rel="noopener noreferrer">View Source Data →</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Mapbox with your personal token
+        mapboxgl.accessToken = 'pk.eyJ1IjoiY2hyaXNiZXJub2RldiIsImEiOiJjbWdjOHloc3YwamU5Mm1wbmRxYXg4bzhjIn0.fRRe-SxTfa9Yqq3p-adEjw';
+
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/light-v11',
+            center: [-95.7129, 37.0902],
+            zoom: 3.5
+        });
+
+        let dataMap = new Map();
+        let geoJsonData = null;
+
+        // Demo CSV Data (embedded)
+        const demoCSV = `Location,Region Type,Growth Rate (65+),Time Period,Primary Driver,Key Insight,Source URL
+Williamson County (TX),County,127%,2010-2022,Suburban Shift,Senior population more than doubled due to families moving to Austin suburbs.,https://demographics.texas.gov/
+Horry County (SC),County,120%,2010-2022,Retirement Magnet,Myrtle Beach area attracting retirees seeking lower cost of living than FL.,https://www.census.gov/
+Ada County (ID),County,103%,2010-2022,Western Migration,Boise area boom driven by retirees leaving West Coast metros.,https://www.census.gov/
+Alaska,State,63%,2010-2020,Aging in Place,Fastest growing senior demographic by rate (due to small baseline).,https://www.census.gov/
+Hays County (TX),County,63%,2010-2017,Suburban Shift,Austin-San Antonio corridor rapid expansion.,https://demographics.texas.gov/
+Idaho,State,54%,2010-2020,Western Migration,Top state destination for active retirees from CA/WA.,https://www.census.gov/
+Sumter County (FL),County,53%,2010-2020,Retirement Magnet,Home to The Villages; already has highest median age in US.,https://www.census.gov/
+Utah,State,53%,2010-2020,Aging in Place,Traditionally young state now seeing fastest rate of aging.,https://www.census.gov/
+Colorado,State,53%,2010-2020,Lifestyle Migration,Wealthy retirees attracted to outdoor recreation/healthcare.,https://www.census.gov/
+Delaware,State,50%,2010-2020,Tax Migration,Florida of the Northeast due to tax-friendly policies.,https://www.census.gov/
+Nevada,State,42%,2012-2022,Western Migration,Baseline comparison; driven by Las Vegas/Reno retiree influx.,https://www.census.gov/`;
+
+        // Color mapping - consolidate to two main categories
+        const colorMap = {
+            'Aging in Place': 'var(--color-driver-2)',
+            'Western Migration': 'var(--color-driver-1)',
+            'Lifestyle Migration': 'var(--color-driver-1)',
+            'Tax Migration': 'var(--color-driver-1)',
+            'Suburban Shift': 'var(--color-driver-1)',
+            'Retirement Magnet': 'var(--color-driver-1)'
+        };
+
+        // Hardcoded data for UI/UX focus (state-level only for GeoJSON matching)
+        function getHardcodedData() {
+            const data = new Map();
+            const records = [
+                {
+                    location: 'Alaska',
+                    regionType: 'State',
+                    growthRate: '63%',
+                    timePeriod: '2010-2020',
+                    primaryDriver: 'Aging in Place',
+                    keyInsight: 'Fastest growing senior demographic by rate (due to small baseline).',
+                    sourceUrl: 'https://www.census.gov/'
+                },
+                {
+                    location: 'Idaho',
+                    regionType: 'State',
+                    growthRate: '54%',
+                    timePeriod: '2010-2020',
+                    primaryDriver: 'Western Migration',
+                    keyInsight: 'Top state destination for active retirees from CA/WA.',
+                    sourceUrl: 'https://www.census.gov/'
+                },
+                {
+                    location: 'Utah',
+                    regionType: 'State',
+                    growthRate: '53%',
+                    timePeriod: '2010-2020',
+                    primaryDriver: 'Aging in Place',
+                    keyInsight: 'Traditionally young state now seeing fastest rate of aging.',
+                    sourceUrl: 'https://www.census.gov/'
+                },
+                {
+                    location: 'Colorado',
+                    regionType: 'State',
+                    growthRate: '53%',
+                    timePeriod: '2010-2020',
+                    primaryDriver: 'Lifestyle Migration',
+                    keyInsight: 'Wealthy retirees attracted to outdoor recreation/healthcare.',
+                    sourceUrl: 'https://www.census.gov/'
+                },
+                {
+                    location: 'Delaware',
+                    regionType: 'State',
+                    growthRate: '50%',
+                    timePeriod: '2010-2020',
+                    primaryDriver: 'Tax Migration',
+                    keyInsight: 'Florida of the Northeast due to tax-friendly policies.',
+                    sourceUrl: 'https://www.census.gov/'
+                },
+                {
+                    location: 'Nevada',
+                    regionType: 'State',
+                    growthRate: '42%',
+                    timePeriod: '2012-2022',
+                    primaryDriver: 'Western Migration',
+                    keyInsight: 'Baseline comparison; driven by Las Vegas/Reno retiree influx.',
+                    sourceUrl: 'https://www.census.gov/'
+                }
+            ];
+
+            records.forEach(record => {
+                data.set(record.location.toLowerCase(), record);
+            });
+            return data;
+        }
+
+        // Fetch US counties GeoJSON
+        async function fetchGeoJSON() {
+            try {
+                const response = await fetch('https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json');
+                console.log('Fetching state GeoJSON');
+                geoJsonData = await response.json();
+                return geoJsonData;
+            } catch (error) {
+                console.error('Error fetching state GeoJSON:', error);
+                return null;
+            }
+        }
+
+        // Add source and layer to map
+        function renderMap(data) {
+            dataMap = data;
+
+            // Remove existing layers and source if present
+            if (map.getLayer('data-fill')) map.removeLayer('data-fill');
+            if (map.getLayer('data-outline')) map.removeLayer('data-outline');
+            if (map.getSource('data-source')) map.removeSource('data-source');
+
+            // Create feature collection with data
+            const features = geoJsonData.features.map(feature => {
+                const stateName = feature.properties.name;
+                const lookupKey = stateName.toLowerCase();
+                const record = dataMap.get(lookupKey);
+
+                return {
+                    ...feature,
+                    properties: {
+                        ...feature.properties,
+                        ...record
+                    }
+                };
+            });
+
+            const featureCollection = {
+                type: 'FeatureCollection',
+                features: features
+            };
+
+            map.addSource('data-source', {
+                type: 'geojson',
+                data: featureCollection
+            });
+
+            // Add fill layer with dynamic colors based on Primary Driver
+            map.addLayer({
+                id: 'data-fill',
+                type: 'fill',
+                source: 'data-source',
+                paint: {
+                    'fill-color': [
+                        'match',
+                        ['get', 'primaryDriver'],
+                        'Aging in Place', 'rgba(63, 81, 181, 0.7)',
+                        'Western Migration', 'rgba(76, 175, 80, 0.7)',
+                        'Lifestyle Migration', 'rgba(76, 175, 80, 0.7)',
+                        'Tax Migration', 'rgba(76, 175, 80, 0.7)',
+                        'Suburban Shift', 'rgba(76, 175, 80, 0.7)',
+                        'Retirement Magnet', 'rgba(76, 175, 80, 0.7)',
+                        'rgba(200, 200, 200, 0.3)'
+                    ],
+                    'fill-opacity': 1
+                }
+            });
+
+            map.addLayer({
+                id: 'data-outline',
+                type: 'line',
+                source: 'data-source',
+                paint: {
+                    'line-color': '#fff',
+                    'line-width': 1
+                }
+            });
+
+            // Click handler
+            map.on('click', 'data-fill', (e) => {
+                if (e.features[0].properties.primaryDriver) {
+                    showModal(e.features[0].properties);
+                }
+            });
+
+            map.on('mouseenter', 'data-fill', () => {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            map.on('mouseleave', 'data-fill', () => {
+                map.getCanvas().style.cursor = '';
+            });
+
+            document.getElementById('fileStatus').textContent = `✓ ${data.size} locations loaded`;
+            document.getElementById('fileStatus').classList.remove('error');
+        }
+
+        // Show modal
+        function showModal(properties) {
+            document.getElementById('modalLocation').textContent = properties.location || 'Unknown';
+            document.getElementById('modalGrowthRate').textContent = properties.growthRate || 'N/A';
+            document.getElementById('modalTimePeriod').textContent = properties.timePeriod || 'N/A';
+            document.getElementById('modalDriver').textContent = properties.primaryDriver || 'N/A';
+            document.getElementById('modalInsight').textContent = properties.keyInsight || 'N/A';
+            document.getElementById('modalLink').href = properties.sourceUrl || 'https://www.census.gov/';
+            document.getElementById('dataModal').style.display = 'block';
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('dataModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function (event) {
+            const modal = document.getElementById('dataModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        };
+
+        // Dark mode toggle
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        darkModeToggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+        });
+
+        // File input handler - disabled for prototype
+        document.getElementById('csvFile').addEventListener('change', function (e) {
+            document.getElementById('fileStatus').textContent = 'CSV upload coming in next phase';
+            document.getElementById('fileStatus').classList.remove('error');
+        });
+
+        // Load demo data button
+        document.getElementById('loadDefaultBtn').addEventListener('click', function () {
+            const data = getHardcodedData();
+            renderMap(data);
+        });
+
+        // Initialize map on load
+        map.on('load', async () => {
+            await fetchGeoJSON();
+            const data = getHardcodedData();
+            renderMap(data);
+        });
+    </script>
+</body>
+
+</html>
